@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>cn.lacia.wheel.test</groupId>
+    <artifactId>dev-demo</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <licenses>
+        <license>
+            <name>Apache 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <id>cqiang</id>
+            <name>沐凉</name>
+            <email>cqiang102@foxmail.com</email>
+        </developer>
+    </developers>
+
+    <!--    统一版本-->
+    <properties>
+        <java.version>1.8</java.version>
+        <lombok.version>1.18.10</lombok.version>
+        <slf4j.version>1.7.29</slf4j.version>
+        <servlet-api.version>4.0.1</servlet-api.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>cn.lacia.wheel</groupId>
+            <artifactId>spring-cq</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!--            <plugin>-->
+            <!--                <groupId>org.springframework.boot</groupId>-->
+            <!--                <artifactId>spring-boot-maven-plugin</artifactId>-->
+            <!--                <configuration>-->
+            <!--                    <mainClass>cn.lacia.wheel.tom.mouse.TomMouse</mainClass>-->
+            <!--                </configuration>-->
+            <!--            </plugin>-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>8</source>
+                    <target>8</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
