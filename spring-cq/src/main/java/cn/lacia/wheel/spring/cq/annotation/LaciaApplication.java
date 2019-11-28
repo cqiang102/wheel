@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE})
-public @interface LaciaSpringApplication {
+public @interface LaciaApplication {
     /**
      *
      * @return 包扫描路径
