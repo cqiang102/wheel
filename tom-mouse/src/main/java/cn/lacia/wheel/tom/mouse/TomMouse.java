@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -26,13 +27,26 @@ public class TomMouse {
     private static final Logger logger = LoggerFactory.getLogger(TomMouse.class);
     private ServerSocket server = null;
 
+    /**
+     * 暂存的客户端
+     */
     public static List<Socket> sockets = new ArrayList<>();
+    /**
+     * 连接池
+     */
     private ExecutorService pool;
+    /**
+     * 端口号
+     */
     private int port = 8080;
+    /**
+     * 启动类，用于扫描 servlet 和 静态文件
+     */
+    private Class clazz;
     public void start(){
         // 开启Server
         logger.debug("server start");
-        System.out.println("????????");
+
         // 创建线程池
         pool = new ThreadPoolExecutor(1, 2, 1000,
                 TimeUnit.MILLISECONDS, new SynchronousQueue<Runnable>(), Executors.defaultThreadFactory(),
@@ -48,6 +62,9 @@ public class TomMouse {
             logger.error("server null error");
             return;
         }
+        // 扫描 class 和 静态文件
+        doScanner();
+        //准备完成
         Socket accept = null;
         while (true){
             if(server==null){
@@ -73,6 +90,15 @@ public class TomMouse {
 
         }
 
+    }
+
+    private void doScanner() {
+        if (clazz!=null) {
+            URL resource = clazz.getClassLoader().getResource("");
+            System.out.println(resource.toString());
+        }else {
+            logger.error("clazz null error");
+        }
     }
 
 }

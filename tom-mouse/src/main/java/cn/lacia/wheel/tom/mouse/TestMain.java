@@ -7,6 +7,8 @@ package cn.lacia.wheel.tom.mouse;
 public class TestMain {
     public static void main(String[] args) {
         TomMouse tomMouse = new TomMouse();
+        tomMouse.setClazz(TestMain.class);
         tomMouse.start();
+
     }
 }

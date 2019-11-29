@@ -1,5 +1,6 @@
 package cn.lacia.wheel.tom.mouse.servlets;
 
+
 import javax.servlet.AsyncContext;
 import javax.servlet.DispatcherType;
 import javax.servlet.RequestDispatcher;
@@ -16,10 +17,12 @@ import javax.servlet.http.HttpUpgradeHandler;
 import javax.servlet.http.Part;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.security.Principal;
 import java.util.Collection;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
@@ -27,7 +30,77 @@ import java.util.Map;
  * @author 你是电脑
  * @create 2019/11/28 - 16:14
  */
+
 public class Request implements HttpServletRequest {
+    private String method = null;
+    private String url = null;
+    private String version = null;
+    private String body = null;
+    private InputStream inputStream = null;
+    private Map<String,String> headers = new HashMap<>();
+    private Map<String,String> parms = new HashMap<>();
+
+    @Override
+    public String toString() {
+        return "Request{" +
+                "method='" + method + '\'' +
+                ", url='" + url + '\'' +
+                ", version='" + version + '\'' +
+                ", body='" + body + '\'' +
+                ", inputStream=" + inputStream +
+                ", headers=" + headers +
+                ", parms=" + parms +
+                '}';
+    }
+
+    public void setInputStream(InputStream inputStream) {
+        this.inputStream = inputStream;
+    }
+
+    public void setMethod(String method) {
+        this.method = method;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
+    }
+
+    public String getBody() {
+        return body;
+    }
+
+    public void setBody(String body) {
+        this.body = body;
+    }
+
+    public Map<String, String> getHeaders() {
+        return headers;
+    }
+
+    public void setHeaders(Map<String, String> headers) {
+        this.headers = headers;
+    }
+
+    public Map<String, String> getParms() {
+        return parms;
+    }
+
+    public void setParms(Map<String, String> parms) {
+        this.parms = parms;
+    }
+
     @Override
     public String getAuthType() {
         return null;
@@ -65,7 +138,7 @@ public class Request implements HttpServletRequest {
 
     @Override
     public String getMethod() {
-        return null;
+        return this.method;
     }
 
     @Override
@@ -225,7 +298,7 @@ public class Request implements HttpServletRequest {
 
     @Override
     public ServletInputStream getInputStream() throws IOException {
-        return null;
+        return (ServletInputStream) this.inputStream;
     }
 
     @Override

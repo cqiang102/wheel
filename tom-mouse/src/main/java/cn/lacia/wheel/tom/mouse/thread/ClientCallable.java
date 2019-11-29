@@ -1,6 +1,9 @@
 package cn.lacia.wheel.tom.mouse.thread;
+import java.util.HashMap;
 
 import cn.lacia.wheel.tom.mouse.TomMouse;
+import cn.lacia.wheel.tom.mouse.servlets.Request;
+import cn.lacia.wheel.tom.mouse.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,6 +64,7 @@ public class ClientCallable implements Callable<Void> {
                         size = inputStream.available();
                     } catch (IOException e) {
                         e.printStackTrace();
+                        break;
                     }
                 }
                 if(size>0){
@@ -79,10 +83,27 @@ public class ClientCallable implements Callable<Void> {
                         e.printStackTrace();
                     }
                     // 读取请求信息成功
-                    // TODO 解析请求首行 判断是否符合规则，资源路径是否存在
-                    // inputStream 塞进 request , outputStream 塞进 response
-                    // TODO 解析完整请求信息，分发到 Servlet .
-                    // TODO 接收到 Servlet 响应，把 Response 对象解析成响应数据
+                    String datas = new String(data);
+                    if (StringUtil.isNotNull(datas)){
+                    // TODO 解析请求首行 判断是否符合规则
+                    logger.info("start parsing the first line");
+                    String[] firstLine = firstLinePars(datas.split("\r\n")[0]);
+                        if (firstLine!=null) {
+                            //解析成功
+                            // inputStream 塞进 request , outputStream 塞进 response
+                            // TODO 解析完整请求信息
+                            Request request = parsingRequest(firstLine,datas,inputStream);
+                            logger.info("request : \n{}",request);
+                            //  TODO 分发到 Servlet .
+                            //   distribution(req,res);
+                            // TODO 接收到 Servlet 响应，把 Response 对象解析成响应数据
+                        }else{
+                            logger.error("请求首行不合法");
+                        }
+
+
+                    }
+
                 }
 
             }
@@ -98,7 +119,54 @@ public class ClientCallable implements Callable<Void> {
             }
         }
         // 断开连接
+        close(inputStream,outputStream);
+        return null;
+    }
 
+    private Request parsingRequest(String[] firstLine, String datas, InputStream inputStream) {
+        Request request = new Request();
+        request.setMethod(firstLine[0]);
+        request.setUrl(firstLine[1]);
+        request.setVersion(firstLine[2]);
+        request.setInputStream(inputStream);
+
+        // 解析路径参数
+        HashMap<String, String> parmMap = null;
+        String[] urlParms = firstLine[1].split("\\?");
+        if(urlParms.length>1){
+            parmMap = new HashMap<>();
+            String[] parm = urlParms[1].split("&");
+            for (String kv : parm) {
+                String[] split = kv.split("=");
+                parmMap.put(split[0],split[1]);
+            }
+        }
+
+        // 解析 body
+        String[] headerBody = datas.split("\r\n\r\n");
+        if (headerBody.length>1){
+            request.setBody(headerBody[1]);
+        }
+        // 解析header
+        String[] split = headerBody[0].split("\r\n");
+        HashMap<String, String> headerMap = null;
+        if(split.length>1){
+            headerMap = new HashMap<>();
+            for (int i = 1; i < split.length; i++) {
+                String[] temp = split[i].split(":");
+                headerMap.put(temp[0], temp[1]);
+            }
+
+        }
+
+
+        request.setHeaders(headerMap);
+        request.setParms(parmMap);
+
+        return request;
+    }
+
+    private void close(InputStream inputStream,OutputStream outputStream) {
         try {
             if (inputStream != null) {
                 inputStream.close();
@@ -112,6 +180,17 @@ public class ClientCallable implements Callable<Void> {
             }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private String[] firstLinePars(String firstLine) {
+        if (StringUtil.isNotNull(firstLine)){
+            String[] split = firstLine.split(" ");
+            // 请求首行必须包含 method , resourceUrl , version 所以 length == 3
+            if (split.length==3){
+                logger.debug("method : {} | url : {} | version : {} ",split[0],split[1],split[2]);
+                return split;
+            }
         }
         return null;
     }
