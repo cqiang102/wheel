@@ -3,6 +3,7 @@ import java.util.HashMap;
 
 import cn.lacia.wheel.tom.mouse.TomMouse;
 import cn.lacia.wheel.tom.mouse.servlets.Request;
+import cn.lacia.wheel.tom.mouse.servlets.Response;
 import cn.lacia.wheel.tom.mouse.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,9 +94,10 @@ public class ClientCallable implements Callable<Void> {
                             // inputStream 塞进 request , outputStream 塞进 response
                             // TODO 解析完整请求信息
                             Request request = parsingRequest(firstLine,datas,inputStream);
+                            Response response = new Response();
                             logger.info("request : \n{}",request);
                             //  TODO 分发到 Servlet .
-                            //   distribution(req,res);
+                               distribution(request,response);
                             // TODO 接收到 Servlet 响应，把 Response 对象解析成响应数据
                         }else{
                             logger.error("请求首行不合法");
@@ -121,6 +123,10 @@ public class ClientCallable implements Callable<Void> {
         // 断开连接
         close(inputStream,outputStream);
         return null;
+    }
+
+    private void distribution(Request request, Response response) {
+
     }
 
     private Request parsingRequest(String[] firstLine, String datas, InputStream inputStream) {

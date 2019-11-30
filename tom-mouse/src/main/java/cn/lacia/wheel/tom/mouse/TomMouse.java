@@ -5,12 +5,14 @@ import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
@@ -43,6 +45,8 @@ public class TomMouse {
      * 启动类，用于扫描 servlet 和 静态文件
      */
     private Class clazz;
+
+    private List<String> classNames = new ArrayList<>();
     public void start(){
         // 开启Server
         logger.debug("server start");
@@ -63,7 +67,13 @@ public class TomMouse {
             return;
         }
         // 扫描 class 和 静态文件
-        doScanner();
+        if (clazz!=null){
+            String replace = clazz.getCanonicalName().replace("." + clazz.getSimpleName(), "");
+            logger.info("init scan package : {}",replace);
+            doScanner(replace);
+        }
+        logger.info("classNames : {}",classNames);
+
         //准备完成
         Socket accept = null;
         while (true){
@@ -92,12 +102,16 @@ public class TomMouse {
 
     }
 
-    private void doScanner() {
-        if (clazz!=null) {
-            URL resource = clazz.getClassLoader().getResource("");
-            System.out.println(resource.toString());
-        }else {
-            logger.error("clazz null error");
+    private void doScanner(String packageName) {
+        URL resource = this.getClass().getClassLoader().getResource(packageName.replaceAll("\\.", "/"));
+        assert resource != null;
+        File file = new File(resource.getFile());
+        for (File listFile : Objects.requireNonNull(file.listFiles())) {
+            if (listFile.isDirectory()) {
+                doScanner(packageName + "." + listFile.getName());
+            } else {
+                classNames.add(packageName + "." + listFile.getName().replaceAll(".class", ""));
+            }
         }
     }
 

@@ -5,6 +5,7 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.Socket;
 import java.util.Collection;
 import java.util.Locale;
 
@@ -13,6 +14,7 @@ import java.util.Locale;
  * @create 2019/11/28 - 16:16
  */
 public class Response implements HttpServletResponse {
+    private Socket socket = null;
     @Override
     public void addCookie(Cookie cookie) {
 

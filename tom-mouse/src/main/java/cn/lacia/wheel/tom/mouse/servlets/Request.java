@@ -1,6 +1,8 @@
 package cn.lacia.wheel.tom.mouse.servlets;
 
 
+import cn.lacia.wheel.tom.mouse.utils.StringUtil;
+
 import javax.servlet.AsyncContext;
 import javax.servlet.DispatcherType;
 import javax.servlet.RequestDispatcher;
@@ -19,8 +21,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.Socket;
 import java.security.Principal;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Locale;
@@ -39,6 +43,15 @@ public class Request implements HttpServletRequest {
     private InputStream inputStream = null;
     private Map<String,String> headers = new HashMap<>();
     private Map<String,String> parms = new HashMap<>();
+    private Socket socket = null;
+
+    public Socket getSocket() {
+        return socket;
+    }
+
+    public void setSocket(Socket socket) {
+        this.socket = socket;
+    }
 
     @Override
     public String toString() {
@@ -101,6 +114,10 @@ public class Request implements HttpServletRequest {
         this.parms = parms;
     }
 
+    /**
+     * 返回用来保护 servlet 的认证方案名，如果 servlet 未受保护则返回 null。
+     * @return
+     */
     @Override
     public String getAuthType() {
         return null;
@@ -108,17 +125,33 @@ public class Request implements HttpServletRequest {
 
     @Override
     public Cookie[] getCookies() {
-        return new Cookie[0];
+        String cookie = headers.get("Cookie");
+        String[] split = cookie.split("&");
+        Cookie[] cookies = new Cookie[split.length];
+        for (int i = 0; i < split.length; i++) {
+            String[] temp = split[i].split("=");
+            cookies[i] = new Cookie(temp[0],temp[1]);
+        }
+        return cookies;
     }
 
+    /**
+     * 返回构建 Date 对象的 long 值。如果不包含 header，则返回 -1。
+     * @param name
+     * @return
+     */
     @Override
     public long getDateHeader(String name) {
-        return 0;
+        String date = headers.get(name);
+        if (StringUtil.isNotNull(date)){
+            return  new Date(date).getTime();
+        }
+        return -1;
     }
 
     @Override
     public String getHeader(String name) {
-        return null;
+        return headers.get(name);
     }
 
     @Override
@@ -128,7 +161,18 @@ public class Request implements HttpServletRequest {
 
     @Override
     public Enumeration<String> getHeaderNames() {
-        return null;
+        return new Enumeration<String>(){
+
+            @Override
+            public boolean hasMoreElements() {
+                return headers.entrySet().iterator().hasNext();
+            }
+
+            @Override
+            public String nextElement() {
+                return headers.entrySet().iterator().next().getKey();
+            }
+        };
     }
 
     @Override
@@ -141,16 +185,29 @@ public class Request implements HttpServletRequest {
         return this.method;
     }
 
+    /**
+     * 返回与客户端发出此请求时发送的URL关联的任何其他路径信息。
+     * 额外的路径信息在 servlet 路径之后，但在查询字符串之前，并以“ /”字符开头。
+     * 如果没有多余的路径信息，则此方法返回null。
+     */
     @Override
     public String getPathInfo() {
         return null;
     }
 
+    /**
+     * getPathTranslated返回servlet名字之后，查询之前的路径信息
+     * @return
+     */
     @Override
     public String getPathTranslated() {
         return null;
     }
 
+    /**
+     * 返回当前页面所在的应用的名字。
+     * @return
+     */
     @Override
     public String getContextPath() {
         return null;
@@ -158,7 +215,13 @@ public class Request implements HttpServletRequest {
 
     @Override
     public String getQueryString() {
-        return null;
+        String s = null;
+        try {
+            s = url.split("\\?")[1];
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return s;
     }
 
     @Override
@@ -283,7 +346,11 @@ public class Request implements HttpServletRequest {
 
     @Override
     public int getContentLength() {
-        return 0;
+        String s = headers.get("Content-Length");
+        if (s==null){
+            s=headers.get("ContentLength");
+        }
+        return Integer.parseInt(s);
     }
 
     @Override
@@ -293,7 +360,11 @@ public class Request implements HttpServletRequest {
 
     @Override
     public String getContentType() {
-        return null;
+        String s = headers.get("Content-Type");
+        if (s==null){
+            s=headers.get("ContentType");
+        }
+        return s;
     }
 
     @Override
@@ -303,6 +374,12 @@ public class Request implements HttpServletRequest {
 
     @Override
     public String getParameter(String name) {
+        String[] split = body.split("&");
+        for (String s : split) {
+            if(s.split("=")[0].equals(name)){
+                return s.split("=")[1];
+            }
+        }
         return null;
     }
 
@@ -313,7 +390,15 @@ public class Request implements HttpServletRequest {
 
     @Override
     public String[] getParameterValues(String name) {
-        return new String[0];
+        String[] split = body.split("&");
+        String[] parmVal = new String[split.length];
+        int i = 0;
+        for (String s : split) {
+            if(s.split("=")[0].equals(name)){
+                parmVal[i++]=s.split("=")[1];
+            }
+        }
+        return parmVal;
     }
 
     @Override
@@ -333,12 +418,12 @@ public class Request implements HttpServletRequest {
 
     @Override
     public String getServerName() {
-        return null;
+        return headers.get("Server");
     }
 
     @Override
     public int getServerPort() {
-        return 0;
+        return socket.getPort();
     }
 
     @Override
@@ -398,17 +483,17 @@ public class Request implements HttpServletRequest {
 
     @Override
     public String getLocalName() {
-        return null;
+        return socket.getLocalSocketAddress().toString();
     }
 
     @Override
     public String getLocalAddr() {
-        return null;
+        return socket.getLocalAddress().toString();
     }
 
     @Override
     public int getLocalPort() {
-        return 0;
+        return socket.getLocalPort();
     }
 
     @Override
