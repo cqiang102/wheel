@@ -5,6 +5,8 @@ import lombok.Data;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -73,7 +75,8 @@ public class TomMouse {
             doScanner(replace);
         }
         logger.info("classNames : {}",classNames);
-
+        // 注册 ServletMapping
+        regMapping();
         //准备完成
         Socket accept = null;
         while (true){
@@ -100,6 +103,27 @@ public class TomMouse {
 
         }
 
+    }
+
+    private void regMapping() {
+        if (classNames.isEmpty()) {
+            logger.error("classNames null error");
+        }else {
+            classNames.forEach(classNames->{
+                Class<?> aClass = null;
+                try {
+                    aClass = Class.forName(classNames);
+                } catch (ClassNotFoundException e) {
+                    e.printStackTrace();
+                }
+                if (aClass != null) {
+                    // 添加了 WebServlet 注解且继承了 HttpServlet 才可以是一个有效的 Servlet
+                    if (aClass.isAnnotationPresent(WebServlet.class)&& HttpServlet.class.isAssignableFrom(aClass)) {
+                        // 取出相应元数据封装成 ServletHandler
+                    }
+                }
+            });
+        }
     }
 
     private void doScanner(String packageName) {
