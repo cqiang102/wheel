@@ -9,4 +9,8 @@ import cn.lacia.wheel.test.service.TestService;
  */
 @LaciaService
 public class TestServiceImpl implements TestService {
+    @Override
+    public String test(String test) {
+        return "test"+this.getClass().getSimpleName();
+    }
 }

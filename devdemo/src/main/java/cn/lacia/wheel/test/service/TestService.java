@@ -5,4 +5,6 @@ package cn.lacia.wheel.test.service;
  * @create 2019/12/15 - 0:14
  */
 public interface TestService {
+
+    String test(String test);
 }

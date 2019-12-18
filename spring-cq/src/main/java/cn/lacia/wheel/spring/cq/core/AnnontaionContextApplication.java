@@ -26,19 +26,19 @@ public class AnnontaionContextApplication {
     private String baseScanUrl = "";
     private Class<?> clazz;
     private List<String> classNames = new LinkedList<>();
-    private Map<String,Object> instance = new HashMap<>();
+    private Map<String, Object> instance = new HashMap<>();
 
     /**
      * 根据 Class 上的注解获得包扫描路径
+     *
      * @param clazz
      */
-    public void setScanClass(Class<?> clazz){
+    public void setScanClass(Class<?> clazz) {
         this.clazz = clazz;
         String value = clazz.getAnnotation(LaciaApplication.class).value();
-        if (StringUtil.isNull(value)){
-            value = clazz.getName().replace(".".concat(clazz.getSimpleName()),"");
+        if (StringUtil.isNull(value)) {
+            value = clazz.getName().replace(".".concat(clazz.getSimpleName()), "");
         }
-        System.out.println(value);
         this.baseScanUrl = value;
     }
 
@@ -48,34 +48,51 @@ public class AnnontaionContextApplication {
 
         assert url != null;
         File file = new File(url.getFile());
-        if(file.isDirectory()){
-            Arrays.stream(Objects.requireNonNull(file.listFiles())).forEach(f ->{
-                if(f.isDirectory()){
-                    doScanner(packageName+"."+f.getName());
+        if (file.isDirectory()) {
+            Arrays.stream(Objects.requireNonNull(file.listFiles())).forEach(f -> {
+                if (f.isDirectory()) {
+                    doScanner(packageName + "." + f.getName());
+                } else {
+                    classNames.add(packageName + "." + f.getName().replace(".class", ""));
                 }
-                else{
-                    classNames.add(packageName+"."+f.getName().replace(".class", ""));
-                }
-            } );
+            });
         }
     }
 
     public void run() {
-
         // 扫描包
         doScanner(baseScanUrl);
-//        classNames.forEach(System.out::println);
         // 实例化
         doInstance();
-        instance.forEach((key,val)->{
-            System.out.println(key.concat(" : ").concat(val.toString()));
-        });
         // 依赖注入
+        doDependencyInjection();
         // 注册 HandlerMapping
     }
 
+    private void doDependencyInjection() {
+        instance.forEach((key, val) -> {
+            System.out.println(key.concat(" : ").concat(val.toString()));
+            Arrays.asList(val.getClass().getDeclaredFields()).forEach(field -> {
+                field.setAccessible(true);
+//                System.out.println(field.getName());
+                // 根据名称注入
+                Object o = instance.get(field.getName());
+
+                // 根据类型注入
+                if (o == null) {
+                    o = instance.get(field.getType().getTypeName());
+                }
+                try {
+                    field.set(val, o);
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+            });
+        });
+    }
+
     private void doInstance() {
-        classNames.forEach(className->{
+        classNames.forEach(className -> {
             Class<?> aClass = null;
             try {
                 aClass = Class.forName(className);
@@ -95,21 +112,22 @@ public class AnnontaionContextApplication {
                     } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                         e.printStackTrace();
                     }
-                    instance.put(beanName,bean);
-                        for (Class<?> anInterface : aClass.getInterfaces()) {
-                            instance.put(anInterface.getName(),bean);
-                        }
+                    instance.put(beanName, bean);
+                    // 如果有接口，把接口的类型也作为 一个 Key
+                    for (Class<?> anInterface : aClass.getInterfaces()) {
+                        instance.put(anInterface.getTypeName(), bean);
+                    }
                 }
                 // Controller 实例化
                 if (aClass.isAnnotationPresent(LaciaController.class)) {
-                    String beanName  = headLowercase(aClass.getSimpleName());
+                    String beanName = headLowercase(aClass.getSimpleName());
                     Object bean = null;
                     try {
                         bean = aClass.getDeclaredConstructor().newInstance();
                     } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                         e.printStackTrace();
                     }
-                    instance.put(beanName,bean);
+                    instance.put(beanName, bean);
                 }
 
             }
@@ -118,13 +136,14 @@ public class AnnontaionContextApplication {
 
     /**
      * 把首字母变成小写
+     *
      * @param simpleName
      * @return
      */
     private String headLowercase(String simpleName) {
         char[] chars = simpleName.toCharArray();
-        if (chars[0]>'A'-1&&chars[0]<'Z'-1){
-            chars[0] = (char) (chars[0]+32);
+        if (chars[0] > 'A' - 1 && chars[0] < 'Z' - 1) {
+            chars[0] = (char) (chars[0] + 32);
         }
         return String.valueOf(chars);
     }
